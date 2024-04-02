@@ -1,0 +1,11 @@
+requests
+onvif_zeep
+
+pyyaml
+fastapi
+uvicorn
+urllib3<2
+requests_unixsocket
+
+opencv-python
+numpy

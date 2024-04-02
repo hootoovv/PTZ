@@ -1,0 +1,628 @@
+
+<!DOCTYPE html>
+<html lang=zh-CN>
+  <head>
+    <meta charset=utf-8>
+    <meta name=renderer content=webkit>
+    <meta http-equiv=X-UA-Compatible content="IE=edge">
+    <meta name=viewport content="width=device-width,initial-scale=1">
+    
+    <!-- Import style -->
+    <!-- <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css" /> -->
+    <link rel="stylesheet" href="/css/element-plus.css" />
+    <!-- Import Vue 3 -->
+    <!-- <script src="https://unpkg.com/vue@3"></script> -->
+    <script src="/js/vue3.js"></script>
+    <!-- Import component library -->
+    <!-- <script src="https://unpkg.com/element-plus"></script> -->
+    <script src="/js/element-plus.js"></script>
+    <!-- <script src="https://unpkg.com/@element-plus/icons-vue"></script> -->
+    <script src="/js/element-plus/icons-vue.js"></script>
+    <!-- Import jQuery -->
+    <!-- <script src="https://unpkg.com/jquery"></script> -->
+    <script src="/js/jquery.js"></script>
+
+    <style type="text/css">
+      .video {
+        width: calc(100vw - 240px);
+        height: calc(100vh - 54px);
+      }
+      .el-header {
+        background-color: #031a46;
+        color: #f0f0f0;
+        height: 54px;
+        padding: 8px 20px;
+      }
+      .el-main{
+        background-color: #000;
+        color: #f0f0f0;
+        padding: 0;
+      }
+      .el-footer {
+        background-color: #EAEDF1;
+        width: 100%;
+      }
+      .el-aside {
+        background-color: #031a46;
+        width: 240px;
+        height: 100vh;
+        color: #f0f0f0;
+        padding: 6px 10px;
+        /* border-right: 1px solid #EAEDF1; */
+      }
+      .el-button {
+        width: 100%;
+      }
+      .el-row {
+        margin: 4px 0;
+      }
+      html {
+        font-size: 16px;
+        height: 100%;
+      }
+      body {
+        margin: 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Helvetica, Arial, sans-serif;
+        font-size: 0.9375rem;
+        font-weight: 400;
+        line-height: 1.5;
+        color: #212529;
+        text-align: left;
+        position: relative;
+        overflow-x: hidden;
+        overflow-y: hidden;
+      }
+    </style>
+    
+    <title>IP 摄像头监控网页</title>
+  </head>
+  <body>
+    <div id="app">
+      <el-container>
+        <el-aside>
+          <el-row style="padding-bottom: 8px;">
+            <el-space :size="10">
+              <span>选择摄像头</span>
+              <el-select v-model="cam_name" style="width: 100px" @change="selectCamera">
+                <el-option
+                  v-for="item in cam_list"
+                  :key="item.name"
+                  :label="item.name"
+                  :value="item.name"
+                />
+              </el-select>
+            </el-space>
+          </el-row>
+          <el-row>
+            <el-card v-loading="loading">
+              <template #header>
+                <span>PTZ 控制</span>
+              </template>
+              <div>
+                <el-row :gutter="10">
+                  <el-col :span="8" :offset="8">
+                    <el-button type="primary" @click="ptzMove(0, -0.1)">向上</el-button>
+                  </el-col>
+                </el-row>
+                <el-row :gutter="10">
+                  <el-col :span="8">
+                    <el-button type="primary" @click="ptzMove(-0.1, 0)">向左</el-button>
+                  </el-col>
+                  <el-col :span="8">
+                    <el-button type="danger" @click="ptzStop()">停止</el-button>
+                  </el-col>
+                  <el-col :span="8">
+                    <el-button type="primary" @click="ptzMove(0.1, 0)">向右</el-button>
+                  </el-col>
+                </el-row>
+                <el-row :gutter="10">
+                  <el-col :span="8" :offset="8">
+                    <el-button type="primary" @click="ptzMove(0, 0.1)">向下</el-button>
+                  </el-col>
+                </el-row>
+                <el-row></el-row>
+                <el-row :gutter="10">
+                  <el-col :span="8" :offset="4">
+                    <el-button type="primary" @click="ptzMove(0, 0, 0.1)">放大</el-button>
+                  </el-col>
+                  <el-col :span="8" :offset="0">
+                    <el-button type="primary" @click="ptzMove(0, 0, -0.1)">缩小</el-button>
+                  </el-col>
+                </el-row>
+                <el-row></el-row>
+                <el-row :gutter="10"> 
+                  <el-col :span="8" :offset="8">
+                    <el-button type="primary" @click="ptzGotoHome()">Home</el-button>
+                  </el-col>
+                </el-row>
+                <el-row :gutter="10"> 
+                  <el-col :span="8" :offset="2">
+                    <el-button type="primary" @click="ptzGotoPreset(preset)">预设</el-button>
+                  </el-col>
+                  <el-col :span="12">
+                    <!-- <el-button type="primary" @click="ptzGotoPreset(2)">预设2</el-button> -->
+                    <el-select v-model="preset" style="width: 100%">
+                      <el-option
+                        v-for="item in preset_list"
+                        :key="item.id"
+                        :label="item.name"
+                        :value="item.id"
+                      />
+                    </el-select>
+                  </el-col>
+                </el-row>
+              </div>
+              <template #footer>
+                <el-space :size="10" direction="vertical" alignment="left">
+                  <el-space :size="10">
+                    <el-icon v-bind:class="{ 'is-loading': is_moving}" :size="20" color="#409efc">
+                      <Loading />
+                    </el-icon>
+                    <span>相机状态/位置</span>
+                  </el-space>
+                  <span>水平: {{position.x}}</span>
+                  <span>垂直：{{position.y}}</span>
+                  <span>缩放：{{zoom}}</span>
+                </el-space>
+              </template>
+            </el-card>                  
+          </el-row>
+        </el-aside>
+        <el-main>
+          <el-container>
+            <el-header>
+              <el-space :size="100">
+                <el-space>
+                  <el-icon :size="20" color="#f0f0f0">
+                    <Place />
+                  </el-icon>
+                  <span>IP 摄像头</span>
+                  <span>{{cam_name}}</span>
+                  <span>{{cam_ip}}</span>
+                  <span></span>
+                  <span>清晰度</span>
+                  <el-select v-model="cam_size" style="width: 140px" @change="selectSize">
+                    <el-option
+                      v-for="item in size_list"
+                      :key="item"
+                      :label="item"
+                      :value="item"
+                    />
+                  </el-select>
+                </el-space>
+                <el-space>
+                  <span>预览</span>
+                  <el-switch v-model="preview" size="large" @change="previewChange"></el-switch>
+                </el-space>
+                <el-space>
+                  <span>FPS</span>
+                  <el-select v-model="fps" @change="previewFPS" style="width: 70px">
+                    <el-option 
+                      v-for="item in fps_list"
+                      :key=item
+                      :label=item
+                      :value=item
+                    />
+                  </el-select>
+                </el-space>
+              </el-space>
+            </el-header>
+            <el-main>
+              <canvas id="video" class="video"></canvas>
+            </el-main>
+          </el-container>
+        </el-main>
+      </el-container>
+    </div>
+    <script type="text/javascript">
+      const App = {
+        data() {
+          return {
+            cam_size: '640 x 480',
+            size_list: ['2560 x 1440', '640 x 480'],
+            video_size: {w: 640, h: 480},
+            canvas_size: {w: 640, h: 480},
+            profile_list: [],
+            ptz: {},
+            cam_name: 'Zone-1',
+            cam_ip: '192.168.1.2',
+            cam_port: 80,
+            cam_username: 'admin',
+            cam_password: 'password',
+            cam_list: [
+                {name: 'Zone-1', ip: '192.168.1.2', port: 80, username: 'admin', password: 'password'},
+                {name: 'Zone-2', ip: '192.168.1.3', port: 80, username: 'admin', password: 'password'},
+                {name: 'Zone-3', ip: '192.168.1.4', port: 80, username: 'admin', password: 'password'},
+            ],
+            interval: 200,
+            fps: 1,
+            fps_list: [1, 2, 3, 5, 7, 10, 15],
+            preset: 1,
+            preset_list: [],
+            preview: false,
+            loading: false,
+            is_moving: false,
+            position: {x: 0, y: 0},
+            zoom: 0
+          }
+        },
+        mounted() {
+          window.onresize = () => {
+            this.clearCanvas()
+          }
+
+          this.clearCanvas()
+
+          this.connectCamera()
+        },
+        methods: {
+          clearCanvas() {
+            let canvas = document.getElementById('video')
+            let ctx = canvas.getContext('2d')
+            ctx.clearRect(0, 0, window.clientWidth*window.devicePixelRatio, window.clientHeight*window.devicePixelRatio);
+            
+            width = canvas.clientWidth*window.devicePixelRatio
+            height = canvas.clientHeight*window.devicePixelRatio
+            canvas.width = width
+            canvas.height = height
+            this.canvas_size.w = width
+            this.canvas_size.h = height
+          },
+          selectCamera(name) {
+            for (let item of this.cam_list) {
+              if (item.name == name) {
+                this.cam_ip = item.ip;
+                this.cam_port = item.port;
+                this.cam_username = item.username;
+                this.cam_password = item.password;
+                break;
+              }
+            }
+            this.preview = false
+            this.connectCamera()
+          },
+          selectSize(size) {
+            let w_h = size.split(' x ')
+            this.video_size.w = w_h[0]
+            this.video_size.h = w_h[1]
+            this.clearCanvas()
+          },
+          connectCamera() {
+            this.loading = true;
+            var data = {
+              ip: this.cam_ip,
+              port: this.cam_port,
+              username: this.cam_username,
+              password: this.cam_password
+            }
+
+            $.ajax({
+              url: "/ptz/connect",
+              method: "post",
+              data: JSON.stringify(data),
+              contentType: "application/json",
+              success: (res) => {
+                this.loading = false
+                if (res.code == 200) {
+                  ElementPlus.ElMessage({
+                    message: 'IP摄像头连接成功.',
+                    type: 'success',
+                    duration: 2000
+                  })
+
+                  setTimeout(() => {
+                    this.getConfig()
+                    this.getPreset()
+                    this.getPosition()
+                  }, 100);
+
+                  if (this.preview) {
+                    setTimeout(this.drawVideo, this.interval)
+                  }
+                }
+                else {
+                  this.loading = false
+                  ElementPlus.ElMessage({
+                    message: '无法连接IP摄像头.',
+                    type: 'error',
+                  })
+                }
+              },
+              error: () => {
+                this.loading = false
+                ElementPlus.ElMessage({
+                  message: '无法连接IP摄像头.',
+                  type: 'error',
+                })
+              }
+            })
+          },
+          drawVideo() {
+            $.ajax({
+              url: "/snapshot",
+              method: "get",
+              // xhrFields: {
+              //   withCredentials: true
+              // },
+              // beforeSend: (xhr) => {
+              //   xhr.setRequestHeader("Web-Cookie", document.cookie)
+              // },
+              success: (res) => {
+                if (res.code == 200) {
+                  let canvas = document.getElementById('video');
+
+                  let canvas_ratio = this.canvas_size.w / this.canvas_size.h
+                  let video_ratio = this.video_size.w / this.video_size.h
+
+                  let x = 0
+                  let y = 0
+                  let draw_width = 0
+                  let draw_height = 0
+
+                  if (canvas_ratio > video_ratio) {
+                    draw_width = this.canvas_size.h * video_ratio 
+                    draw_height = this.canvas_size.h
+                    x = (this.canvas_size.w - draw_width) / 2
+                    y = 0
+                  }
+                  else {
+                    draw_width = this.canvas_size.w
+                    draw_height = this.canvas_size.w / video_ratio
+                    x = 0
+                    y = (this.canvas_size.h - draw_height) / 2
+                  }
+
+                  let ctx = canvas.getContext('2d');
+                  let img = new Image();
+                  img.src = res.data.image;
+                  img.onload = () => {
+                    if (this.preview) {
+                      ctx.drawImage(img, x, y, draw_width, draw_height)
+                    }
+                  }
+                  if (this.preview) {
+                    setTimeout(this.drawVideo, this.interval)
+                  }
+                }
+                else if (res.code == 401) {
+                  ElementPlus.ElMessage({
+                    message: '连接超时.',
+                    type: 'warning',
+                    duration: 1000
+                  })
+                  setTimeout(this.connectCamera(), 500)
+                }
+                else {
+                  console.log("snapshot error")
+                  if (this.preview) {
+                    setTimeout(this.drawVideo, this.interval)
+                  }
+                }
+              },
+              error: () => {
+                ElementPlus.ElMessage({
+                  message: '无法获取视频.',
+                  type: 'error',
+                })
+              }
+            })
+          },
+          previewChange(val) {
+            if (val) {
+              setTimeout(this.drawVideo, this.interval)
+            }
+            else {
+              this.clearCanvas()
+            }
+          },
+          previewFPS(val) {
+            this.interval = 1000 / val
+          },
+          getConfig() {
+            $.ajax({
+              url: "/ptz/config",
+              method: "get",
+              success: (res) => {
+                if (res.code == 200) {
+                  this.size_list = []
+                  for (let stream of res.data.Streams) {
+                    profile = {
+                      name: stream.Name,
+                      width: stream.Video.Resolution.Width,
+                      height: stream.Video.Resolution.Height,
+                      size: stream.Video.Resolution.Width + ' x ' + stream.Video.Resolution.Height,
+                    }
+                    this.profile_list.push(profile)
+                    this.size_list.push(profile.size)
+                  }
+                  let id = length(this.profile_list) - 1
+                  this.cam_size = this.profile_list[id].size
+                  this.ptz = res.data.PTZ
+                  let w_h = this.cam_size.split(' x ')
+                  this.video_size.w = w_h[0]
+                  this.video_size.h = w_h[1]
+                  // console.log(this.profile_list)
+                  // console.log(this.ptz)
+                }
+              },
+              error: () => {
+                ElementPlus.ElMessage.error('无法摄像头配置信息.')
+              }
+            })
+          },
+          getPosition() {
+            $.ajax({
+              url: "/ptz/position",
+              method: "get",
+              success: (res) => {
+                if (res.code == 200) {
+                  this.is_moving = res.data.Moving
+                  this.position.x = res.data.Pan
+                  this.position.y = res.data.Tilt
+                  this.zoom = res.data.Zoom
+
+                  if (this.is_moving) {
+                    setTimeout(this.getPosition, 200)
+                  }
+                }
+                else {
+                  console.log("ptz get position error: " + res.message)
+                }
+              },
+              error: () => {
+                console.log("ptz get position error")
+              }
+            })
+          },
+          getPreset() {
+            $.ajax({
+              url: "/ptz/presets",
+              method: "get",
+              success: (res) => {
+                if (res.code == 200) {
+                  this.preset_list = []
+                  for (let preset of res.data.Presets) {
+                    let set = { id: preset.Id, name: preset.Name }
+                    this.preset_list.push(set)
+                  }
+                  this.preset = this.preset_list[0].id
+                }
+                else {
+                  console.log("ptz get presets error: " + res.message)
+                }
+              },
+              error: () => {
+                console.log("ptz get presets error")
+              }
+            })
+          },
+          ptzMove(p, t, z=0, ps=1, ts=1, zs=1) {
+            var data = {
+              Pan: p,
+              Tilt: t, 
+              Zoom: z,
+              PanSpeed: ps,
+              TiltSpeed: ts,
+              ZoomSpeed: zs
+            }
+
+            $.ajax({
+              url: "/ptz/move/relative",
+              method: "post",
+              data: JSON.stringify(data),
+              contentType: "application/json",
+              success: (res) => {
+                if (res.code == 200) {
+                  setTimeout(this.getPosition, 200)
+                }
+                else if (res.code == 401) {
+                  ElementPlus.ElMessage({
+                    message: '连接超时.',
+                    type: 'warning',
+                    duration: 1000
+                  })
+                  setTimeout(this.connectCamera(), 500)
+                }
+                else {
+                  console.log("ptz move error: " + res.message)
+                }
+              },
+              error: () => {
+                console.log("ptz move error")
+              }
+            })
+          },
+          ptzStop() {
+            $.ajax({
+              url: "/ptz/stop",
+              method: "post",
+              success: (res) => {
+                if (res.code == 200) {
+                  setTimeout(this.getPosition, 200)
+                }
+                else if (res.code == 401) {
+                  ElementPlus.ElMessage({
+                    message: '连接超时.',
+                    type: 'warning',
+                    duration: 1000
+                  })
+                  setTimeout(this.connectCamera(), 500)
+                }
+                else {
+                  console.log("ptz stop error: " + res.message)
+                }
+              },
+              error: () => {
+                console.log("ptz stop error")
+              }
+            })
+          },
+          ptzGotoHome() {
+            $.ajax({
+              url: "/ptz/goto/home",
+              method: "post",
+              success: (res) => {
+                if (res.code == 200) {
+                  setTimeout(this.getPosition, 200)
+                }
+                else if (res.code == 401) {
+                  ElementPlus.ElMessage({
+                    message: '连接超时.',
+                    type: 'warning',
+                    duration: 1000
+                  })
+                  setTimeout(this.connectCamera(), 500)
+                }
+                else {
+                  console.log("ptz goto home error: " + res.message)
+                }
+              },
+              error: () => {
+                console.log("ptz goto home error")
+              }
+            })
+          },
+          ptzGotoPreset(id) {
+            var data = {
+              preset: id
+            }
+
+            $.ajax({
+              url: "/ptz/goto/preset",
+              method: "post",
+              data: JSON.stringify(data),
+              contentType: "application/json",
+              success: (res) => {
+                if (res.code == 200) {
+                  setTimeout(this.getPosition, 200)
+                }
+                else if (res.code == 401) {
+                  ElementPlus.ElMessage({
+                    message: '连接超时.',
+                    type: 'warning',
+                    duration: 1000
+                  })
+                  setTimeout(this.connectCamera(), 500)
+                }
+                else {
+                  console.log("ptz goto preset error: " + res.message)
+                }
+              },
+              error: () => {
+                console.log("ptz goto preset error")
+              }
+            })
+          }
+        }
+      }
+
+      const app = Vue.createApp(App)
+      for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+        app.component(key, component)
+      }
+      app.use(ElementPlus)
+      app.mount("#app")
+    </script>    
+ 
+  </body>
+</html>
