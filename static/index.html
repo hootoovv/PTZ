@@ -260,7 +260,7 @@
             let canvas = document.getElementById('video')
             let ctx = canvas.getContext('2d')
             ctx.clearRect(0, 0, window.clientWidth*window.devicePixelRatio, window.clientHeight*window.devicePixelRatio);
-            
+
             width = canvas.clientWidth*window.devicePixelRatio
             height = canvas.clientHeight*window.devicePixelRatio
             canvas.width = width
@@ -436,7 +436,7 @@
                     this.profile_list.push(profile)
                     this.size_list.push(profile.size)
                   }
-                  let id = length(this.profile_list) - 1
+                  let id = this.profile_list.length - 1
                   this.cam_size = this.profile_list[id].size
                   this.ptz = res.data.PTZ
                   let w_h = this.cam_size.split(' x ')

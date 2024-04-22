@@ -116,7 +116,7 @@ if __name__ == '__main__':
   time.sleep(5)
   test_snapshot("/snapshot", cookie)
 
-  payload = {"preset": 1}
+  payload = {"preset": "1"}
   test_post("/ptz/goto/preset", cookie, payload)
 
   time.sleep(1)
@@ -140,7 +140,7 @@ if __name__ == '__main__':
   time.sleep(10)
 
   time.sleep(5)
-  payload = {"preset": 2}
+  payload = {"preset": "2"}
   test_post("/ptz/goto/preset", cookie, payload)
 
 
