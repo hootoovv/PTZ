@@ -136,15 +136,8 @@ func handleConfig(w http.ResponseWriter, r *http.Request) {
   sid, err := checkCookie(w, r)
 
   if err == nil {
-    res, err := gSessions[sid].ptz.GetConfigs()
-
-    if err != nil {
-      res["code"] = http.StatusInternalServerError
-      res["message"] = err.Error()
-      res["data"] = nil
-    } else {
-      gSessions[sid].ActivateSession()
-    }
+    gSessions[sid].ActivateSession()
+    res, _ := gSessions[sid].ptz.GetConfigs()
 
     w.Header().Set("Content-Type", "application/json")
     json.NewEncoder(w).Encode(&res)
@@ -163,15 +156,8 @@ func handlePresets(w http.ResponseWriter, r *http.Request) {
   sid, err := checkCookie(w, r)
 
   if err == nil {
-    res, err := gSessions[sid].ptz.GetPresets()
-
-    if err != nil {
-      res["code"] = http.StatusInternalServerError
-      res["message"] = err.Error()
-      res["data"] = nil
-    } else {
-      gSessions[sid].ActivateSession()
-    }
+    gSessions[sid].ActivateSession()
+    res, _ := gSessions[sid].ptz.GetPresets()
 
     w.Header().Set("Content-Type", "application/json")
     json.NewEncoder(w).Encode(&res)
@@ -190,15 +176,8 @@ func handlePosition(w http.ResponseWriter, r *http.Request) {
   sid, err := checkCookie(w, r)
 
   if err == nil {
-    res, err := gSessions[sid].ptz.GetPosition()
-
-    if err != nil {
-      res["code"] = http.StatusInternalServerError
-      res["message"] = err.Error()
-      res["data"] = nil
-    } else {
-      gSessions[sid].ActivateSession()
-    }
+    gSessions[sid].ActivateSession()
+    res, _ := gSessions[sid].ptz.GetPosition()
 
     w.Header().Set("Content-Type", "application/json")
     json.NewEncoder(w).Encode(&res)
@@ -217,15 +196,8 @@ func handleMoving(w http.ResponseWriter, r *http.Request) {
   sid, err := checkCookie(w, r)
 
   if err == nil {
-    res, err := gSessions[sid].ptz.IsMoving()
-
-    if err != nil {
-      res["code"] = http.StatusInternalServerError
-      res["message"] = err.Error()
-      res["data"] = nil
-    } else {
-      gSessions[sid].ActivateSession()
-    }
+    gSessions[sid].ActivateSession()
+    res, _ := gSessions[sid].ptz.IsMoving()
 
     w.Header().Set("Content-Type", "application/json")
     json.NewEncoder(w).Encode(&res)
@@ -244,8 +216,8 @@ func handleSnapshot(w http.ResponseWriter, r *http.Request) {
   sid, err := checkCookie(w, r)
 
   if err == nil {
-    res := gSessions[sid].GetSnapshot()
     gSessions[sid].ActivateSession()
+    res := gSessions[sid].GetSnapshot()
 
     w.Header().Set("Content-Type", "application/json")
     json.NewEncoder(w).Encode(&res)
@@ -320,6 +292,7 @@ func handleRelativeMove(w http.ResponseWriter, r *http.Request) {
     err := json.NewDecoder(r.Body).Decode(&pos)
   
     if err == nil {
+      gSessions[sid].ActivateSession()
       res, _ = gSessions[sid].ptz.MoveRelativePosition(pos.Pan, pos.Tilt, pos.Zoom, pos.PanSpeed, pos.TiltSpeed, pos.ZoomSpeed)
     }
 
@@ -352,6 +325,7 @@ func handleGotoPosition(w http.ResponseWriter, r *http.Request) {
     err := json.NewDecoder(r.Body).Decode(&pos)
   
     if err == nil {
+      gSessions[sid].ActivateSession()
       res, _ = gSessions[sid].ptz.GotoPosition(pos.Pan, pos.Tilt, pos.Zoom, pos.PanSpeed, pos.TiltSpeed, pos.ZoomSpeed)
     }
 
@@ -384,6 +358,7 @@ func handleGotoPreset(w http.ResponseWriter, r *http.Request) {
     err := json.NewDecoder(r.Body).Decode(&preset)
   
     if err == nil {
+      gSessions[sid].ActivateSession()
       res, _ = gSessions[sid].ptz.GotoPreset(preset.Id)
     }
 
@@ -404,6 +379,7 @@ func handleGotoHome(w http.ResponseWriter, r *http.Request) {
   sid, err := checkCookie(w, r)
 
   if err == nil {
+    gSessions[sid].ActivateSession()
     res, _ := gSessions[sid].ptz.GotoHome()
 
     w.Header().Set("Content-Type", "application/json")
@@ -423,6 +399,7 @@ func handleStop(w http.ResponseWriter, r *http.Request) {
   sid, err := checkCookie(w, r)
 
   if err == nil {
+    gSessions[sid].ActivateSession()
     res, _ := gSessions[sid].ptz.Stop()
 
     w.Header().Set("Content-Type", "application/json")
