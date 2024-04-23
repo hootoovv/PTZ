@@ -346,39 +346,6 @@ func server_gin_main() {
   go checkGinSessionExpire()
   
   router.Run(":8000")
-
-	// http.Handle("/", &StaticFile{"static/index.html"})
-	// http.Handle("/index.html", &StaticFile{"static/index.html"})
-	// http.Handle("/favicon.ico", &StaticFile{"static/favicon.ico"})
-	// http.Handle("/js/jquery.js", &StaticFile{"static/js/jquery.js"})
-	// http.Handle("/js/vue3.js", &StaticFile{"static/js/vue3.js"})
-	// http.Handle("/js/element-plus.js", &StaticFile{"static/js/element-plus.js"})
-	// http.Handle("/js/element-plus/icons-vue.js", &StaticFile{"static/js/element-plus/icons-vue.js"})
-	// http.Handle("/css/element-plus.css", &StaticFile{"static/css/element-plus.css"})
-
-  // http.HandleFunc("/ptz", handleApiHome)
-  // http.HandleFunc("/snapshot", handleSnapshot)
-  // http.HandleFunc("/ptz/connect", handleConnect)
-  // http.HandleFunc("/ptz/config", handleConfig)
-  // http.HandleFunc("/ptz/presets", handlePresets)
-  // http.HandleFunc("/ptz/position", handlePosition)
-  // http.HandleFunc("/ptz/moving", handleMoving)
-  // http.HandleFunc("/ptz/profile", handleProfile)
-  // http.HandleFunc("/ptz/move/relative", handleRelativeMove)
-  // http.HandleFunc("/ptz/goto/position", handleGotoPosition)
-  // http.HandleFunc("/ptz/goto/preset", handleGotoPreset)
-  // http.HandleFunc("/ptz/goto/home", handleGotoHome)
-  // http.HandleFunc("/ptz/stop", handleStop)
-
-  // fmt.Println("Starting Restful server on port 8000.")
-
-  // go check_session_expire()
-
-	// err := http.ListenAndServe(":8000", nil)
-
-  // if err != nil {
-  //   fmt.Println(err)
-  // }
 }
 
 
