@@ -121,5 +121,6 @@ func test() {
 
 func main() {
 	// test()
-	server_main()
+	// server_main()
+	server_gin_main()
 }
